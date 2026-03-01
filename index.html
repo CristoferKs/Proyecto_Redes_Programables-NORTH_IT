@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NORTH IT SUPPORT - Rutas</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 40px; background-color: #f4f4f9; }
+        .container { max-width: 600px; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: auto; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        #resultado { margin-top: 25px; padding: 20px; background: #f8f9fa; border-left: 5px solid #007bff; border-radius: 5px; display: none; }
+        h2 { color: #333; text-align: center; }
+        ul { padding-left: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calculador de Rutas</h2>
+        <input type="text" id="start" placeholder="Origen (ej: Santiago, Chile)">
+        <input type="text" id="end" placeholder="Destino (ej: Valparaiso, Chile)">
+        <button onclick="calcularRuta()">Calcular Ruta</button>
+        <button onclick="descargarLogs()" style="background-color: #6c757d; margin-top: 10px;">Descargar Historial (.log)</button>
+        <div id="resultado">
+            <h3>Resultado:</h3>
+            <p id="info"></p>
+            <h4>Instrucciones de viaje:</h4>
+            <ul id="pasos"></ul>
+        </div>
+    </div>
+    <script>
+        async function calcularRuta() {
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const resDiv = document.getElementById('resultado');
+            const infoP = document.getElementById('info');
+            const pasosUl = document.getElementById('pasos');
+
+            if (!start || !end) return alert("Ingresa origen y destino");
+            
+            try {
+                const response = await fetch(`/get_route?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    resDiv.style.display = 'block';
+                    // Sincronizado con las llaves de Python
+                    infoP.innerHTML = `
+                        <b>Desde:</b> ${data.origin}<br>
+                        <b>Hacia:</b> ${data.destination}<br>
+                        <b>Distancia:</b> ${data.distance_km} km<br>
+                        <b>Tiempo estimado:</b> ${data.duration}
+                    `;
+                    
+                    pasosUl.innerHTML = ""; // Limpiar lista anterior
+                    data.instructions.forEach(paso => {
+                        const li = document.createElement('li');
+                        li.textContent = paso;
+                        pasosUl.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                alert("Error al conectar con el servidor local");
+            }
+        }
+        function descargarLogs() {
+        // Redirige a la ruta de descarga que creamos en Flask
+        window.location.href = '/download_logs';
+    }
+    </script>
+</body>
+</html>
